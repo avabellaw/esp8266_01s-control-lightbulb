@@ -23,7 +23,7 @@ def toggle_led():
 
 def blink_led(count=1, blink_len=1):
     count *= 2 # Toggle on, toggle off
-    for i in range(blink_led):
+    for i in range(count):
         toggle_led()
         time.sleep(blink_len)
 
