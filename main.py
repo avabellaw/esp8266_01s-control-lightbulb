@@ -16,5 +16,11 @@ def connect_wifi(ssid, password):
 
 def toggle_led():
     led.value(not led.value())
+    
+
+def blink_led(count=2):
+    for i in range(blink_led):
+        toggle_led()
+        time.sleep(1)
 
 connect_wifi(os.environ['SSID'], os.environ['PASSWORD'])
