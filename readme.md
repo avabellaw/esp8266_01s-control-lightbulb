@@ -26,4 +26,9 @@ python -m esptool --port [eg COM8] --baud 460800 write_flash --flash_size=detect
 
 I ended up using rshell to upload the files. More on this.
 
+## Issues
+
+MicroPython doesn't include enviroment variables.
+I decided to import and use a config.py file instead.
+
 
