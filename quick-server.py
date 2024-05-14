@@ -5,6 +5,9 @@ import threading
 
 connection_threads = []
 
+global is_running
+is_running = True
+
 
 def start_server():
     active_connections_count = 0
@@ -27,7 +30,7 @@ def start_server():
                 try:
                     connection, addr = s.accept()
 
-                    print(f"Connect received: {addr}")
+                    print(f"Connection received: {addr}")
                     thread = threading.Thread(target=handle_client,
                                               args=(connection, ))
                     connection_threads.append(thread)
@@ -35,28 +38,35 @@ def start_server():
                 except socket.timeout:
                     pass
         except KeyboardInterrupt:
-            print("Shutting down server")
             # End connection threads
-            for t in connection_threads:
-                t.join()
+            print("Ending client threads...")
+            global is_running
+            is_running = False
+            # print("Waiting for threads to end...")
+            # for t in connection_threads:
+            #     t.join()
+
+            # Forcefully close for now until I implement check to see if 
+            # client is still connected
+            print("Closing socket...")
             s.close()
+            print("Server shutdown successfully.")
             # Exit without error
             sys.exit(0)
 
 
 def handle_client(connection):
     this_thread = connection_threads[-1]
-    while True:
+    while is_running:
         data = connection.recv(1)
-        if data == b'1':
-            print("Turning on light")
-        elif data == b'0':
-            print("Turning off light")
+        if data == config.BUTTON_CLICK:
+            print("Button pressed")
         elif not data:
             print("Client disconnected")
             connection_threads.remove(this_thread)
             break
         else:
+            print(data)
             pass
 
 

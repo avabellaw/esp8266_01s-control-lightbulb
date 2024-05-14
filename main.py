@@ -35,12 +35,11 @@ def connect_wifi(ssid, password):
 
 def listen_for_btn_click(socket):
     while True:
-        if button.value() == 1:
-            while button.value() == 1:
-                pass  # Wait for the button to be released
-
+        if button.value() == 0:
             send_message(socket, config.BUTTON_CLICK)
             blink_led(1, 0.3)
+            while button.value() == 0:
+                pass  # Wait for the button to be released
         time.sleep(0.1)  # So it doesn't accidentally trigger multiple times
 
 
@@ -54,10 +53,7 @@ def connect_to_server():
 
 def send_message(socket, message):
     print('Sending message:', message)
-    try:
-        socket.send(message)
-    finally:
-        socket.close()
+    socket.send(message)
 
 
 connect_wifi(config.SSID, config.PASSWORD)
