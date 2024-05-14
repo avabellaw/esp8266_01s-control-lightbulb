@@ -17,7 +17,8 @@ class ClientConnection:
         self.pings_missed += 1
 
         if self.pings_missed > 5:
-            self.has_disconnected()
+            print("Client not responding...")
+            self.connection.close()
 
     def has_disconnected(self):
         print("~Client disconnected~")
@@ -26,7 +27,6 @@ class ClientConnection:
 
     def has_error(self, error):
         print(f"Client error: {error}")
-        self.has_disconnected()
 
 
 client_connections = []
@@ -74,12 +74,9 @@ def start_server():
             print("Ending client threads...")
             global is_running
             is_running = False
-            # print("Waiting for threads to end...")
-            # for t in connection_threads:
-            #     t.join()
-
-            # Forcefully close for now until I implement check to see if 
-            # client is still connected
+            print("Waiting for threads to end...")
+            for c in client_connections:
+                c.thread.join()
             print("Closing socket...")
             s.close()
             print("Server shutdown successfully.")
@@ -97,15 +94,16 @@ def handle_client(connection):
                 print("Button pressed")
             elif data == b'0':
                 this_client.pings_missed = 0
-                print("Ping received")
+            elif not data:
+                this_client.has_disconnected()
+                break
             else:
                 print("data: " + data)
                 pass
-        except ConnectionResetError:
-            this_client.has_disconnected()
-            break
         except Exception as e:
             this_client.has_error(e)
+            if this_client in client_connections:
+                client_connections.remove(this_client)
             break
 
 
