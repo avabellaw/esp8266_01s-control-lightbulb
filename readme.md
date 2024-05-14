@@ -31,4 +31,14 @@ I ended up using rshell to upload the files. More on this.
 MicroPython doesn't include enviroment variables.
 I decided to import and use a config.py file instead.
 
+## Physical setup
 
+### Resistors 
+
+* R1 and R2 for 5v power supply
+
+* 68 ohm resister for 2V (Red, yellow, green)
+
+* White and blue is fine as it's 3.3v
+
+* No resistor for button connected to GIO0  
