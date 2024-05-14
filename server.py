@@ -3,7 +3,23 @@ import config
 import sys
 import threading
 
-connection_threads = []
+
+class ClientConnection:
+    def __init__(self, thread, connection, address):
+        self.thread = thread
+        self.connection = connection
+        self.address = address
+
+    def has_disconnected(self):
+        print("~Client disconnected~")
+        client_connections.remove(self)
+
+    def has_error(self, error):
+        print(f"Client error: {error}")
+        self.has_disconnected()
+
+
+client_connections = []
 
 global is_running
 is_running = True
@@ -23,9 +39,9 @@ def start_server():
         try:
             print("Waiting for new connection")
             while True:
-                if active_connections_count != len(connection_threads):
-                    active_connections_count = len(connection_threads)
-                    print(f"Active connections: {len(connection_threads)}")
+                if active_connections_count != len(client_connections):
+                    active_connections_count = len(client_connections)
+                    print(f"Active connections: {len(client_connections)}")
 
                 try:
                     connection, addr = s.accept()
@@ -33,7 +49,10 @@ def start_server():
                     print(f"Connection received: {addr}")
                     thread = threading.Thread(target=handle_client,
                                               args=(connection, ))
-                    connection_threads.append(thread)
+
+                    client = ClientConnection(thread, connection, addr)
+                    client_connections.append(client)
+
                     thread.start()
                 except socket.timeout:
                     pass
@@ -56,18 +75,25 @@ def start_server():
 
 
 def handle_client(connection):
-    this_thread = connection_threads[-1]
+    this_client = client_connections[-1]
+
     while is_running:
-        data = connection.recv(1)
-        if data == config.BUTTON_CLICK:
-            print("Button pressed")
-        elif not data:
-            print("Client disconnected")
-            connection_threads.remove(this_thread)
+        try:
+            data = connection.recv(1)
+            if data == config.BUTTON_CLICK:
+                print("Button pressed")
+            elif not data:
+                this_client.has_disconnected()
+                break
+            else:
+                print("data: " + data)
+                pass
+        except ConnectionResetError as e:
+            this_client.has_error(e)
             break
-        else:
-            print(data)
-            pass
+        except Exception as e:
+            this_client.has_error(e)
+            break
 
 
 start_server()
