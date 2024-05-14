@@ -20,10 +20,23 @@ Use `rshell -p [PORT eg COM8]`
 
 `cp ./main.py /pyboard/`
 
+## Connecting to MicroPython shell
+
+Using Putty, you can:
+* select 'serial' connection.
+* Set "Flow control" (under connection within category on the left) to none
+* Set baud to 115200
+* Set Serial line to port (eg COM8)
+
 ## Issues
 
-MicroPython doesn't include enviroment variables.
+**MicroPython doesn't include enviroment variables.**
 I decided to import and use a config.py file instead.
+
+**MicroPython also doesn't use threading.**
+ I got around this by setting blocking to False on the socket. This means that socket.recv is no longer a blocking call.
+
+`socket.setblocking(False)`
 
 ## Physical setup
 
