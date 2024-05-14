@@ -11,6 +11,8 @@ def connect_to_server():
     server_address = (Socket.gethostname(), 9999)
     s.connect(server_address)
 
+    s.setblocking(False)
+
     return (server_address, s)
 
 
@@ -32,13 +34,10 @@ addr, socket = connect_to_server()
 
 print(f'Connected to server: {addr}')
 
-t1 = threading.Thread(target=listen_for_ping, args=(socket,))
-t1.start()
-
 for i in range(4):
+    listen_for_ping(socket)
     socket.send(b'1')
     time.sleep(4)
 
 is_running = False
-t1.join()
 socket.close()

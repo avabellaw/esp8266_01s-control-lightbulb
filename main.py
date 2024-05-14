@@ -35,6 +35,13 @@ def connect_wifi(ssid, password):
 
 def listen_for_btn_click(socket):
     while True:
+        try:
+            data = socket.recv(1)
+        except OSError:
+            pass
+        else:
+            socket.send(data)
+
         if button.value() == 0:
             send_message(socket, config.BUTTON_CLICK)
             blink_led(1, 0.3)
@@ -48,12 +55,26 @@ def connect_to_server():
     server_address = (config.SERVER_IP, config.SERVER_PORT)
     socket.connect(server_address)
 
+    socket.setblocking(False)
+
     return (server_address, socket)
 
 
 def send_message(socket, message):
     print('Sending message:', message)
     socket.send(message)
+
+
+def listen_for_ping(socket):
+    socket.settimeout(2)
+    while True:
+        try:
+            data = socket.recv(1)
+            socket.send(data)
+            if not data:
+                break
+        except usocket.timeout:
+            pass
 
 
 connect_wifi(config.SSID, config.PASSWORD)
