@@ -38,6 +38,11 @@ I decided to import and use a config.py file instead.
 
 `socket.setblocking(False)`
 
+**Can't add files**
+There wasn't enough space due to the size of MicroPython.
+I flashed the 512KB version instead.
+I should have noted the size of MicroPython originally as the chip is only 1MB
+
 ## Physical setup
 
 ### Resistors 
