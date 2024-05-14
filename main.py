@@ -20,6 +20,7 @@ def blink_led(count=1, blink_len=0.1):
 
 
 def connect_wifi(ssid, password):
+    print('Connecting to WiFi...')
     sta_if = network.WLAN(network.STA_IF)
     if not sta_if.isconnected():
         blink_led()
@@ -27,32 +28,41 @@ def connect_wifi(ssid, password):
         sta_if.connect(ssid, password)
         while not sta_if.isconnected():
             blink_led(1, 1)
-    print('Network config:', sta_if.ifconfig())
-    blink_led(3, 1)  # Blink 5 times with 0.1 seconds interval
+    print(f'Connected to WiFi: {ssid}\n\
+            Network config: {sta_if.ifconfig()}')
+    blink_led(3, 1)  # Blink 3 times with 1 second interval
 
 
-def listen_for_btn_click():
+def listen_for_btn_click(socket):
     while True:
-        if button.value() == 0:
-            print('Button pressed')
-            send_message('Button pressed')
-            blink_led(1, 0.3)
-            while button.value() == 0:
+        if button.value() == 1:
+            while button.value() == 1:
                 pass  # Wait for the button to be released
+
+            send_message(socket, config.BUTTON_CLICK)
+            blink_led(1, 0.3)
         time.sleep(0.1)  # So it doesn't accidentally trigger multiple times
 
 
-def send_message(message):
-    sock = usocket.socket(usocket.AF_INET, usocket.SOCK_STREAM)
+def connect_to_server():
+    socket = usocket.socket(usocket.AF_INET, usocket.SOCK_STREAM)
     server_address = (config.SERVER_IP, config.SERVER_PORT)
-    sock.connect(server_address)
+    socket.connect(server_address)
+
+    return (server_address, socket)
+
+
+def send_message(socket, message):
+    print('Sending message:', message)
     try:
-        sock.send(message)
+        socket.send(message)
     finally:
-        sock.close()
+        socket.close()
 
 
-print('Connecting to WiFi...')
 connect_wifi(config.SSID, config.PASSWORD)
 
-listen_for_btn_click()
+addr, socket = connect_to_server()
+print(f'Connected to server: {addr}')
+
+listen_for_btn_click(socket)
