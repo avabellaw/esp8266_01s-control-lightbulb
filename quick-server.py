@@ -1,33 +1,46 @@
 import socket
+import config
+import sys
 
-# Create a socket object
-serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# Get local machine name and port
-host = socket.gethostname()
-port = 9999
+def start_server():
+    # Create a socket object
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        host = socket.gethostname()
+        port = config.SERVER_PORT
 
-# Bind to the port
-serversocket.bind((host, port))
+        s.bind((host, port))
+        s.listen(2)
+        s.settimeout(2)
+        try:
+            while True:
+                print("Waiting for connection")
+                try:
+                    connection, addr = s.accept()
+                except socket.timeout:
+                    pass
 
-# Queue up to 5 requests
-serversocket.listen(5)
+                print(f"Connect received: {addr}")
+                handle_client(connection)
+        except KeyboardInterrupt:
+            print("Shutting down server")
+            s.close()
+            # Exit without error
+            sys.exit(0)
 
-while True:
-    print("Listening...")
 
-    # Establish a connection
-    clientsocket, addr = serversocket.accept()
-
-    print("Got a connection from %s" % str(addr))
-
-    # Receive data from the client
+def handle_client(connection):
     while True:
-        data = clientsocket.recv(1024)
-        msg = data.decode('utf-8')
-        if not msg:
+        data = connection.recv(1)
+        if data == b'1':
+            print("Turning on light")
+        elif data == b'0':
+            print("Turning off light")
+        elif not data:
+            # Client disconnected
             break
-        print("Received data: %s" % msg)
+        else:
+            pass
 
-    # Close the connection
-    clientsocket.close()
+
+start_server()
