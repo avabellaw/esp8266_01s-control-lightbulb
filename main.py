@@ -4,8 +4,9 @@ from machine import Pin
 import usocket
 import config
 
-led = Pin(2, Pin.OUT)
-button = Pin(2, Pin.IN, Pin.PULL_UP)
+# LED on espboard8266 01s is GPIO2
+led = Pin(2, Pin.OUT)  # GPIO2
+button = Pin(0, Pin.IN, Pin.PULL_UP)  # GPIO0
 
 
 def toggle_led():
@@ -18,19 +19,22 @@ def blink_led(count=1, blink_len=0.1):
         toggle_led()
         time.sleep(blink_len)
 
+    # Common anode configuaration and therefore, 1 is off
+    # (cathode to ground)
+    led.value(1)  # Ensure led is off after blinking
+
 
 def connect_wifi(ssid, password):
     print('Connecting to WiFi...')
     sta_if = network.WLAN(network.STA_IF)
     if not sta_if.isconnected():
-        blink_led()
         sta_if.active(True)
         sta_if.connect(ssid, password)
         while not sta_if.isconnected():
             blink_led(1, 1)
     print(f'Connected to WiFi: {ssid}\n\
             Network config: {sta_if.ifconfig()}')
-    blink_led(3, 1)  # Blink 3 times with 1 second interval
+    blink_led(4, 0.2)  # Blink 5 times with 0.2 second interval
 
 
 def listen_for_btn_click(socket):
@@ -42,12 +46,11 @@ def listen_for_btn_click(socket):
         else:
             socket.send(data)
 
-        if button.value() == 0:
+        if button.value() == 0:  # 0 when button is pressed
             send_message(socket, config.BUTTON_CLICK)
-            blink_led(1, 0.3)
+            blink_led(2, 0.1)
             while button.value() == 0:
                 pass  # Wait for the button to be released
-        time.sleep(0.1)  # So it doesn't accidentally trigger multiple times
 
 
 def connect_to_server():
