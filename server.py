@@ -2,6 +2,7 @@ import socket
 import config
 import sys
 import threading
+from control_lightbulb import light
 
 
 class ClientConnection:
@@ -18,7 +19,7 @@ class ClientConnection:
 
         if self.pings_missed > 5:
             print("Client not responding...")
-            self.connection.close()
+            self.has_disconnected()
 
     def has_disconnected(self):
         print("~Client disconnected~")
@@ -40,12 +41,12 @@ def start_server():
 
     # Create a socket object
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        host = socket.gethostname()
+        host = "0.0.0.0"
         port = config.SERVER_PORT
 
         s.bind((host, port))
         s.listen()
-        s.settimeout(2)
+        s.settimeout(5)
         try:
             print("Waiting for new connection")
             while True:
@@ -74,9 +75,10 @@ def start_server():
             print("Ending client threads...")
             global is_running
             is_running = False
-            print("Waiting for threads to end...")
-            for c in client_connections:
-                c.thread.join()
+            # FORCE THREADS TO END BY UNCOMMENTING THE FOLLOWING CODE
+            # print("Waiting for threads to end...")
+            # for c in client_connections:
+            #     c.thread.join()
             print("Closing socket...")
             s.close()
             print("Server shutdown successfully.")
@@ -92,6 +94,7 @@ def handle_client(connection):
             data = connection.recv(1)
             if data == config.BUTTON_CLICK:
                 print("Button pressed")
+                light.toggle()
             elif data == b'0':
                 this_client.pings_missed = 0
             elif not data:
