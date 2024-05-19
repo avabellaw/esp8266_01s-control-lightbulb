@@ -86,7 +86,8 @@ def start_server():
 def handle_client(connection):
     this_client = client_connections[-1]
 
-    while is_running:
+    while is_running and this_client.is_alive:
+        this_client.query_alive()
         try:
             data = connection.recv(1)
             if data == config.BUTTON_CLICK:
