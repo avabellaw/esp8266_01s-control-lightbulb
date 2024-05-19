@@ -13,6 +13,8 @@ LED_OFF = 0
 
 led.value(LED_OFF)  # Ensure led is off at start
 
+socket = None
+
 
 def toggle_led():
     led.value(not led.value())
@@ -54,6 +56,11 @@ def listen_for_btn_click(socket):
             time.sleep(0.1)
 
 
+def button_clicked(pin):
+    send_message(socket, config.BUTTON_CLICK)
+    blink_led(1, 0.1)
+
+
 def connect_to_server():
     socket = usocket.socket(usocket.AF_INET, usocket.SOCK_STREAM)
     server_address = (config.SERVER_IP, config.SERVER_PORT)
@@ -76,4 +83,6 @@ connect_wifi(config.SSID, config.PASSWORD)
 addr, socket = connect_to_server()
 print(f'Connected to server: {addr}')
 
-listen_for_btn_click(socket)
+# Setup event handler (interrupt) for button press
+# This is more power effiecient than polling
+button.irq(trigger=Pin.IRQ_FALLING, handler=button_clicked)
