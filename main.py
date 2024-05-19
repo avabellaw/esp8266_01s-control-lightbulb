@@ -44,25 +44,20 @@ def connect_wifi(ssid, password):
 
 def listen_for_btn_click(socket):
     while True:
-        try:
-            data = socket.recv(1)
-            time.sleep(0.3)
-        except OSError:
-            time.sleep(0.1)
-        else:
-            socket.send(data)
-
         if button.value() == 0:  # 0 when button is pressed
             send_message(socket, config.BUTTON_CLICK)
             blink_led(1, 0.1)
             while button.value() == 0:
+                time.sleep(0.1)
                 pass  # Wait for the button to be released
+        else:
+            time.sleep(0.1)
 
 
 def connect_to_server():
     socket = usocket.socket(usocket.AF_INET, usocket.SOCK_STREAM)
     server_address = (config.SERVER_IP, config.SERVER_PORT)
-    
+
     # Need to add feedback if not connected
     socket.connect(server_address)
 

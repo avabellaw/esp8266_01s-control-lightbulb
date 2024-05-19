@@ -34,9 +34,20 @@ addr, socket = connect_to_server()
 
 print(f'Connected to server: {addr}')
 
+
+def send_message(socket, message):
+    try:
+        socket.send(message)
+    except (BrokenPipeError, ConnectionResetError):
+        print('Connection lost')
+        addr, s = connect_to_server()
+        socket = s
+        socket.send(message)
+
+
 for i in range(4):
-    listen_for_ping(socket)
-    socket.send(b'1')
+    # listen_for_ping(socket)
+    send_message(socket, b'1')
     time.sleep(4)
 
 is_running = False

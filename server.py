@@ -13,17 +13,17 @@ class ClientConnection:
         self.pings_missed = 0
         self.is_alive = True
 
-    def ping(self):
-        self.connection.sendall(b'0')
+    def query_alive(self):
         self.pings_missed += 1
 
-        if self.pings_missed > 5:
+        if self.pings_missed > 10:
             print("Client not responding...")
             self.has_disconnected()
 
     def has_disconnected(self):
         print("~Client disconnected~")
         self.is_alive = False
+        self.connection.close()
         client_connections.remove(self)
 
     def has_error(self, error):
@@ -50,9 +50,6 @@ def start_server():
         try:
             print("Waiting for new connection")
             while True:
-                for client in client_connections:
-                    client.ping()
-
                 if active_connections_count != len(client_connections):
                     active_connections_count = len(client_connections)
                     print(f"Active connections: {len(client_connections)}")
@@ -89,7 +86,7 @@ def start_server():
 def handle_client(connection):
     this_client = client_connections[-1]
 
-    while is_running and this_client.is_alive:
+    while is_running:
         try:
             data = connection.recv(1)
             if data == config.BUTTON_CLICK:
