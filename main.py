@@ -3,6 +3,7 @@ import time
 from machine import Pin
 import usocket
 import config
+import utime
 
 # LED on espboard8266 01s is GPIO2
 led = Pin(2, Pin.OUT)  # GPIO2
@@ -14,6 +15,9 @@ LED_OFF = 0
 led.value(LED_OFF)  # Ensure led is off at start
 
 socket = None
+debounce_interval = 250  # Pause before listening for another button press (ms)
+
+button_last_pressed = 0
 
 
 def toggle_led():
@@ -45,8 +49,17 @@ def connect_wifi(ssid, password):
 
 
 def button_clicked(pin):
-    send_message(socket, config.BUTTON_CLICK)
-    blink_led(1, 0.1)
+    global button_last_pressed
+    current_time = time.ticks_ms()
+
+    time_since_last_press = utime.ticks_diff(current_time, button_last_pressed)
+
+    if time_since_last_press < debounce_interval:
+        return
+    else:
+        button_last_pressed = current_time
+        send_message(socket, config.BUTTON_CLICK)
+        blink_led(1, 0.1)
 
 
 def connect_to_server():
