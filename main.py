@@ -44,18 +44,6 @@ def connect_wifi(ssid, password):
         blink_led(4, 0.2)  # Blink 5 times with 0.2 second interval
 
 
-def listen_for_btn_click(socket):
-    while True:
-        if button.value() == 0:  # 0 when button is pressed
-            send_message(socket, config.BUTTON_CLICK)
-            blink_led(1, 0.1)
-            while button.value() == 0:
-                time.sleep(0.1)
-                pass  # Wait for the button to be released
-        else:
-            time.sleep(0.1)
-
-
 def button_clicked(pin):
     send_message(socket, config.BUTTON_CLICK)
     blink_led(1, 0.1)
