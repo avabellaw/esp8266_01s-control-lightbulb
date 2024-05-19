@@ -55,6 +55,8 @@ def button_clicked(pin):
     time_since_last_press = utime.ticks_diff(current_time, button_last_pressed)
 
     if time_since_last_press < debounce_interval:
+        time_left_ms = (debounce_interval - time_since_last_press) / 1000
+        time.sleep(time_left_ms)
         return
     else:
         button_last_pressed = current_time
