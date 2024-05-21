@@ -5,6 +5,8 @@ import usocket
 import config
 import utime
 
+button_down = False
+
 # LED on espboard8266 01s is GPIO2
 led = Pin(2, Pin.OUT)  # GPIO2
 button = Pin(0, Pin.IN, Pin.PULL_UP)  # GPIO0
@@ -46,19 +48,20 @@ def connect_wifi(ssid, password):
 
 
 def button_clicked(pin):
-    global button_last_pressed
-    current_time = time.ticks_ms()
+    global button_down
 
-    time_since_last_press = utime.ticks_diff(current_time, button_last_pressed)
+    print("Button event")
 
-    if time_since_last_press < debounce_interval:
-        time_left_ms = (debounce_interval - time_since_last_press) / 1000
-        time.sleep(time_left_ms)
-        return
-    else:
-        button_last_pressed = current_time
-        send_message(socket, config.BUTTON_CLICK)
-        blink_led(1, 0.1)
+    if not pin.value():  # Button down
+        if not button_down:
+            button_down = True
+            print("button down")
+    else:  # Button released
+        if button_down:
+            print("button up")
+            button_down = False
+            send_message(socket, config.BUTTON_CLICK)
+            blink_led(1, 0.1)
 
 
 def connect_to_server():
@@ -81,4 +84,4 @@ addr, socket = connect_to_server()
 
 # Setup event handler (interrupt) for button press
 # This is more power effiecient than polling
-button.irq(trigger=Pin.IRQ_FALLING, handler=button_clicked)
+button.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=button_clicked)
