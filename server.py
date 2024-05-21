@@ -91,7 +91,8 @@ def handle_client(connection):
             data = connection.recv(1)
             if data == config.BUTTON_CLICK:
                 print("Button pressed")
-                light.toggle()
+                if not config.DEBUG:
+                    light.toggle()
             elif data == b'0':
                 this_client.pings_missed = 0
             elif not data:
