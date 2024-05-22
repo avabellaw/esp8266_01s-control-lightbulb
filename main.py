@@ -51,8 +51,12 @@ def connect_wifi(ssid, password):
 def button_clicked(time_held_down):
     if config.DEBUG:
         print(f"Button held down for {time_held_down}ms")
-    send_message(socket, config.BUTTON_CLICK)
     blink_led(1, 0.1)
+
+    if time_held_down <= short_press_ms:
+        send_message(socket, config.BUTTON_SHORT_CLICK)
+    else:
+        send_message(socket, config.BUTTON_LONG_CLICK)
 
 
 def button_event_handler(pin):

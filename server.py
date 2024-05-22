@@ -89,8 +89,12 @@ def handle_client(connection):
     while is_running:
         try:
             data = connection.recv(1)
-            if data == config.BUTTON_CLICK:
+            if data == config.BUTTON_SHORT_CLICK:
                 print("Button pressed")
+                if not config.DEBUG:
+                    light.toggle()
+            elif data == config.BUTTON_LONG_CLICK:
+                print("Button held")
                 if not config.DEBUG:
                     light.toggle()
             elif data == b'0':
