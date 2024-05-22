@@ -17,9 +17,10 @@ LED_OFF = 1
 led.value(LED_OFF)  # Ensure led is off at start
 
 socket = None
-debounce_interval = 250  # Pause before listening for another button press (ms)
 
-button_last_pressed = 0
+button_held_down_start = 0
+
+short_press_ms = 320
 
 
 def toggle_led():
@@ -47,21 +48,29 @@ def connect_wifi(ssid, password):
         blink_led(3, 0.1)
 
 
-def button_clicked(pin):
-    global button_down
+def button_clicked(time_held_down):
+    if config.DEBUG:
+        print(f"Button held down for {time_held_down}ms")
+    send_message(socket, config.BUTTON_CLICK)
+    blink_led(1, 0.1)
 
-    print("Button event")
+
+def button_event_handler(pin):
+    global button_down
+    global button_held_down_start
 
     if not pin.value():  # Button down
         if not button_down:
             button_down = True
-            print("button down")
+            button_held_down_start = utime.ticks_ms()
     else:  # Button released
         if button_down:
-            print("button up")
+            button_held_down_finish = utime.ticks_ms()
+
+            time_held_down = button_held_down_finish - button_held_down_start
             button_down = False
-            send_message(socket, config.BUTTON_CLICK)
-            blink_led(1, 0.1)
+
+            button_clicked(time_held_down)
 
 
 def connect_to_server():
@@ -84,4 +93,5 @@ addr, socket = connect_to_server()
 
 # Setup event handler (interrupt) for button press
 # This is more power effiecient than polling
-button.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=button_clicked)
+button.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING,
+           handler=button_event_handler)
