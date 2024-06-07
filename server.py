@@ -2,7 +2,10 @@ import socket
 import config
 import sys
 import threading
-from control_lightbulb import light
+from control_lightbulb import get_lightbulb_instance
+from log import log
+
+light = get_lightbulb_instance()
 
 
 class ClientConnection:
