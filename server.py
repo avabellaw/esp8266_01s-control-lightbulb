@@ -15,11 +15,17 @@ class ClientConnection:
         self.address = address
         self.pings_missed = 0
         self.is_alive = True
+        self.show_pings = False
 
     def query_alive(self):
+        if self.show_pings:
+            print(f"pings missed: {self.pings_missed}")
+
         self.pings_missed += 1
 
         if self.pings_missed > 10:
+            if self.show_pings:
+                print("maxed pings")
             print("Client not responding...")
             self.has_disconnected()
 
@@ -28,8 +34,6 @@ class ClientConnection:
         global dead_connections_num
         dead_connections_num += 1
         self.is_alive = False
-        self.connection.close()
-        client_connections.remove(self)
 
     def has_error(self, error):
         print(f"Client error: {error}")
@@ -117,6 +121,7 @@ def handle_client(connection):
                 except Exception as e:
                     handle_light_bulb_exception(e)
             elif data == b'0':
+                print(f"ping received, missed pings: {this_client.pings_missed}")
                 this_client.pings_missed = 0
             elif not data:
                 this_client.has_disconnected()
@@ -124,6 +129,9 @@ def handle_client(connection):
             else:
                 print("data: " + data)
                 pass
+
+    connection.close()
+    client_connections.remove(this_client)
 
 
 def shutdown_server():
@@ -145,15 +153,15 @@ def check_console_input():
     global is_running
     while is_running:
         user_input = input()
-        match user_input:
-            case "connections":
-                print_active_connections()
-                break
-            case "connection history":
-                print(f"{dead_connections_num} connections have been lost")
-                break
-            case "quit":
-                is_running = False
+        if user_input == "connections":
+            print_active_connections()
+        elif user_input == "connection history":
+            print(f"{dead_connections_num} connections have been lost")
+        elif user_input.startswith("show_pings"):
+            for c in client_connections:
+                c.show_pings = True
+        elif user_input == "quit":
+            is_running = False
 
 
 console_thread = threading.Thread(target=check_console_input)
