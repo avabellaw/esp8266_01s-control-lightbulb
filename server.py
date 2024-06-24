@@ -25,6 +25,8 @@ class ClientConnection:
 
     def has_disconnected(self):
         print("~Client disconnected~")
+        global dead_connections_num
+        dead_connections_num += 1
         self.is_alive = False
         self.connection.close()
         client_connections.remove(self)
@@ -35,11 +37,15 @@ class ClientConnection:
 
 client_connections = []
 
+global dead_connections_num
+dead_connections_num = 0
+
 global is_running
 is_running = True
 
 
 def start_server():
+    global is_running
     active_connections_count = 0
 
     # Create a socket object
@@ -52,10 +58,10 @@ def start_server():
         s.settimeout(5)
         try:
             print("Waiting for new connection")
-            while True:
+            while is_running:
                 if active_connections_count != len(client_connections):
                     active_connections_count = len(client_connections)
-                    print(f"Active connections: {len(client_connections)}")
+                    print_active_connections()
 
                 try:
                     connection, addr = s.accept()
@@ -69,16 +75,18 @@ def start_server():
 
                     thread.start()
                 except socket.timeout:
-                    pass
+                    for c in client_connections:
+                        c.query_alive()
+
         except KeyboardInterrupt:
+            shutdown_server()
+        finally:
             # End connection threads
             print("Ending client threads...")
-            global is_running
             is_running = False
-            # FORCE THREADS TO END BY UNCOMMENTING THE FOLLOWING CODE
-            # print("Waiting for threads to end...")
-            # for c in client_connections:
-            #     c.thread.join()
+            print("Waiting for threads to end...")
+            for c in client_connections:
+                c.thread.join()
             print("Closing socket...")
             s.close()
             print("Server shutdown successfully.")
@@ -87,19 +95,27 @@ def start_server():
 
 
 def handle_client(connection):
+    connection.settimeout(4)
     this_client = client_connections[-1]
 
-    while is_running:
+    while is_running and this_client.is_alive:
         try:
             data = connection.recv(1)
+        except socket.timeout:
+            pass
+        else:
             if data == config.BUTTON_SHORT_CLICK:
                 print("Button pressed")
-                if not config.DEBUG:
+                try:
                     light.toggle()
+                except Exception as e:
+                    handle_light_bulb_exception(e)
             elif data == config.BUTTON_LONG_CLICK:
                 print("Button held")
-                if not config.DEBUG:
-                    light.toggle()
+                try:
+                    light.toggle_brightness()
+                except Exception as e:
+                    handle_light_bulb_exception(e)
             elif data == b'0':
                 this_client.pings_missed = 0
             elif not data:
@@ -108,11 +124,39 @@ def handle_client(connection):
             else:
                 print("data: " + data)
                 pass
-        except Exception as e:
-            this_client.has_error(e)
-            if this_client in client_connections:
-                client_connections.remove(this_client)
-            break
 
+
+def shutdown_server():
+    global is_running
+    is_running = False
+
+
+def handle_light_bulb_exception(e):
+    log(e)
+    global light
+    light = get_lightbulb_instance()
+
+
+def print_active_connections():
+    print(f"Active connections: {len(client_connections)}")
+
+
+def check_console_input():
+    global is_running
+    while is_running:
+        user_input = input()
+        match user_input:
+            case "connections":
+                print_active_connections()
+                break
+            case "connection history":
+                print(f"{dead_connections_num} connections have been lost")
+                break
+            case "quit":
+                is_running = False
+
+
+console_thread = threading.Thread(target=check_console_input)
+console_thread.start()
 
 start_server()
