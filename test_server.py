@@ -1,13 +1,12 @@
 import socket as Socket
 import time
-import threading
 
 global is_running
 is_running = True
 
 
 def connect_to_server():
-    s = Socket.socket(Socket.AF_INET, Socket.SOCK_STREAM)
+    s = Socket.socket(Socket.AF_INET, Socket.SOCK_DGRAM)
     server_address = (Socket.gethostname(), 9999)
     s.connect(server_address)
 
@@ -38,6 +37,7 @@ print(f'Connected to server: {addr}')
 def send_message(socket, message):
     try:
         socket.send(message)
+        data = socket.recv(1)
     except (BrokenPipeError, ConnectionResetError):
         print('Connection lost')
         addr, s = connect_to_server()
