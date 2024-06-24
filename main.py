@@ -1,9 +1,9 @@
 import network
 import time
-from machine import Pin
+from machine import Pin, reset
 import usocket
 import config
-import utime
+from log import log
 
 button_down = False
 
@@ -45,7 +45,7 @@ def connect_wifi(ssid, password):
         sta_if.connect(ssid, password)
         while not sta_if.isconnected():
             blink_led(1, 1)
-        blink_led(3, 0.1)
+        blink_led(2, 0.4)
 
 
 def button_clicked(time_held_down):
@@ -66,10 +66,10 @@ def button_event_handler(pin):
     if not pin.value():  # Button down
         if not button_down:
             button_down = True
-            button_held_down_start = utime.ticks_ms()
+            button_held_down_start = time.ticks_ms()
     else:  # Button released
         if button_down:
-            button_held_down_finish = utime.ticks_ms()
+            button_held_down_finish = time.ticks_ms()
 
             time_held_down = button_held_down_finish - button_held_down_start
             button_down = False
@@ -82,13 +82,33 @@ def connect_to_server():
     server_address = (config.SERVER_IP, config.SERVER_PORT)
 
     # Need to add feedback if not connected
-    socket.connect(server_address)
+    try:
+        socket.connect(server_address)
+    except OSError as e:
+        blink_led(8, 0.1)
+        error_restart(socket, e, "Error connecting to server")
+    else:
+        blink_led(1, 0.8)
 
     return (server_address, socket)
 
 
 def send_message(socket, message):
-    socket.send(message)
+    try:
+        socket.send(message)
+    except OSError as e:
+        title = "Error sending message"
+        error_restart(socket, e, title)
+
+
+def error_restart(socket, e, title="Error"):
+    blink_led(2, 0.1)
+    blink_led(1, 0.5)
+    blink_led(2, 0.1)
+    socket.close()
+    log(e, config.DEBUG, title)
+    time.sleep(5)
+    reset()
 
 
 connect_wifi(config.SSID, config.PASSWORD)
@@ -99,3 +119,7 @@ addr, socket = connect_to_server()
 # This is more power effiecient than polling
 button.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING,
            handler=button_event_handler)
+
+while True:
+    send_message(socket, b'0')
+    time.sleep(5)
