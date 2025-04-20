@@ -1,3 +1,5 @@
+**Pin() refers to GPIO not pin number**
+
 ## Flashing micropython
 
 **First erase flash**
@@ -12,7 +14,13 @@ python -m esptool --port [eg COM8] --baud 460800 write_flash --flash_size=detect
 
 Install using pip.
 
+**rshell will not work with Python 3**
+I have forked my own version and updated rshell to use pyreadline3 instead of pyreadline. This version works with Python 3.12 but not currenly with Python 3.13.
+
+```pip install rshell-python3.12```
+
 rshell works well to upload the files. I had issues originally because I used the wrong size micropython. Therefore, no space was left for my files.
+
 
 Use `rshell -p [PORT eg COM8]`
 
